@@ -8,6 +8,12 @@ This code is intended to be used as
 
 Put `enetdown.js` somewhere.
 
+Also available as a Bower package:
+
+```
+	bower install enetdown
+```
+
 # Usage
 
 Include `enetdown.js` in your project either directly:
