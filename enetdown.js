@@ -10,54 +10,86 @@
 		var loop = function() {
 			callback(function(stop) {
 				if (!stop) {
-					setTimeout(loop, interval);
+					setTimeout(loop, typeof(interval) == 'function' ? interval() : interval);
 				}
 			});
 		}
 		loop();
 	}
 
-	// Try to load some resource as a test of whether we're online or not.
-	function fake_ajax(options) {
-		var image = new Image,
-		    waiting = true,
-		    callback = function(e) {
-		    	waiting = false;
-		    	options.success();
-		    };
-
-		image.onload = image.onerror = callback;
-
-		image.src = options.url + (options.cache_bust ? ('?cache_bust=' + new Date().getTime()) : '');
-
-		setTimeout(function() {
-			if (waiting) {
-				options.error();
-			}
-		}, options.timeout);
+	function get_timestamp() {
+		return new Date().getTime();
 	}
 
 	function enetdown(options) {
+		// Try to load some resource as a test of whether we're online or not.
+		this.ajax = function(options) {
+			var xhr = new XMLHttpRequest,
+			    timestamp = get_timestamp(),
+			    that = this;
+
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4 && timestamp >= that.last_event_timestamp) {
+					var status = (xhr.status == 200 || xhr.status == 204) ? 'online' : 'offline';
+					options.callback(status);
+				}
+			}
+			xhr.timeout = options.timeout;
+
+			xhr.open('GET', options.url, true);
+			xhr.send();
+		}
+		this.fake_ajax = function(options) {
+			var image = new Image,
+			    waiting = true,
+			    timestamp = get_timestamp(),
+			    that = this,
+			    callback = function(e) {
+			    	waiting = false;
+			    	options.callback('online');
+			    };
+
+			image.onload = image.onerror = callback;
+
+			// Images get cached, so avoid that.
+			image.src = options.url + '?cache_bust=' + timestamp;
+
+			setTimeout(function() {
+				if (waiting && timestamp >= that.last_event_timestamp) {
+					options.callback('offline');
+				}
+			}, options.timeout);
+		}
+
 		this.options = {
 			// Listen and act according to browser online/offline events.
 			listen_to_browser_events: true,
 
 			// Ping this URL every delay seconds to see if we're online.
 			ping_resource_url: null,
-			ping_resource_delay: 5000,
+			ping_resource_delay: 30000,
+			ping_resource_delay_while_offline: 5000,
 
 			// Call this function whenever online status changes.
 			status_change_callback: null,
 
-			// If set to true, a "random" string will be appended to requests.
-			cache_bust: true,
-
 			// Set the state to "online" by default.
-			initial_online: true
+			initial_online: true,
+
+			// Set to true to bypass CORS using an Image element instead of XHR.
+			bypass_cors: false
 		}
 
 		// Online indicator.
 		this.is_online = undefined;
+
+		// Request timeout.
+		this.request_timeout = 500;
+
+		// Keep a timestamp of the last change event to prevent race conditions where
+		// the time of our access to the remote resource is older than the time some
+		// other component notified us we're online.
+		this.last_event_timestamp = 0;
 
 		this.initialize = function(options) {
 			if (options) {
@@ -79,20 +111,24 @@
 
 			if (this.options.ping_resource_url) {
 				set_interval(function(callback) {
-					fake_ajax({
+					var f = that.options.bypass_cors ? that.fake_ajax : that.ajax;
+					f.call(that, {
 						url: that.options.ping_resource_url,
-						timeout: that.options.ping_resource_delay,
-						cache_bust: that.options.cache_bust,
-						success: function() {
-							online_cb();
-							callback();
-						},
-						error: function() {
-							offline_cb();
+						timeout: that.request_timeout,
+						error_means_online: that.options.error_means_online,
+						callback: function(status) {
+							if (status == 'online') {
+								online_cb();
+							} else if (status == 'offline') {
+								offline_cb();
+							}
+
 							callback();
 						}
 					});
-				}, this.options.ping_resource_delay);
+				}, function() {
+					return that.online() ? that.options.ping_resource_delay : that.options.ping_resource_delay_while_offline;
+				});
 			}
 		}
 
@@ -104,6 +140,8 @@
 		this.online = function(online) {
 			// Boolean value for 'online' means we're setting the value.
 			if (online === true || online === false) {
+				this.last_event_timestamp = get_timestamp();
+
 				var changed = (this.is_online !== online);
 
 				this.is_online = online;

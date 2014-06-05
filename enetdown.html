@@ -9,6 +9,7 @@
 		}
 
 		var x = enetdown({
+			bypass_cors: true,
 			ping_resource_url: 'http://www.google.com/favicon.ico',
 			status_change_callback: reflect_online_status
 		});
