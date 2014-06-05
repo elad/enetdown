@@ -1,0 +1,19 @@
+<html>
+<body>
+	Status: <span id="status"></span>
+
+	<script type="text/javascript" src="enetdown.js"></script>
+	<script type="text/javascript">
+		function reflect_online_status(online) {
+			document.getElementById('status').innerHTML = (online ? 'ONLINE' : 'OFFLINE');
+		}
+
+		var x = enetdown({
+			ping_resource_url: 'http://www.google.com/favicon.ico',
+			status_change_callback: reflect_online_status
+		});
+
+		reflect_online_status(x.online());
+	</script>
+</body>
+</html>
