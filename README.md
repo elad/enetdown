@@ -2,8 +2,6 @@
 
 Online/offline state change detection.
 
-This code is intended to be used as 
-
 # Install
 
 First, put `enetdown.js` somewhere, or install it from Bower:
@@ -82,7 +80,3 @@ Open the `enetdown.html` file in your browser. Pull the plug of your network con
 # License
 
 Licensed under MIT. See LICENSE file.
-
-# Author
-
-Elad Efrat
