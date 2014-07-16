@@ -34,9 +34,9 @@
 					options.callback(status);
 				}
 			}
-			xhr.timeout = options.timeout;
 
 			xhr.open('GET', options.url, true);
+			xhr.timeout = options.timeout;
 			xhr.send();
 		}
 		this.fake_ajax = function(options) {
