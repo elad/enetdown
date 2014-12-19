@@ -1,6 +1,6 @@
 {
 	"name": "ENETDOWN",
 	"description": "Online/offline state change detection.",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"main": "enetdown.js"
 }
