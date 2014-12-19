@@ -1,7 +1,7 @@
 /*!
- * ENETDOWN.js (https://github.com/eladxxx/enetdown)
+ * ENETDOWN.js (https://github.com/elad/enetdown)
  * Copyright (c) 2014 Elad Efrat
- * Licensed under MIT (https://github.com/eladxxx/enetdown/blob/master/LICENSE)
+ * Licensed under MIT (https://github.com/elad/enetdown/blob/master/LICENSE)
  */
 
 (function() {
